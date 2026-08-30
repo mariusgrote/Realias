@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 APP="Realias.app"
 WORKFLOW="Create Local Alias.workflow"
 
-swift build -c release --disable-sandbox
+swift build -c release
 BINARY="$(swift build -c release --show-bin-path)/Realias"
 
 rm -rf "$APP"
