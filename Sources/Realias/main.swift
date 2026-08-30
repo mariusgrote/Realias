@@ -5,11 +5,11 @@ import AppKit
 let arguments = CommandLine.arguments.dropFirst().filter { !$0.hasPrefix("-psn_") }
 
 if arguments.isEmpty {
-	let delegate = AppDelegate()
-	let app = NSApplication.shared
-	app.delegate = delegate
-	app.run()
-	exit(0)
+  let delegate = AppDelegate()
+  let app = NSApplication.shared
+  app.delegate = delegate
+  app.run()
+  exit(0)
 }
 
 exit(CLI.run(Array(arguments)))
