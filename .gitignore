@@ -1,0 +1,17 @@
+# Build output (recreate with ./build.sh)
+Realias.app/
+Create Local Alias.workflow/
+
+# Generated test fixtures (recreate with ./make_testalias.sh)
+testdata/Dokumente
+testdata/file.txt
+
+# Python
+__pycache__/
+*.py[cod]
+
+# macOS
+.DS_Store
+
+# Local editor/agent settings
+.claude/settings.local.json
