@@ -5,8 +5,11 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+REALIAS="$(swift build -c release --show-bin-path)/Realias"
+[ -x "$REALIAS" ] || { echo "run ./build.sh first"; exit 1; }
+
 RELATIVE="${1:-Documents}"
-ROOT="$(python3 -c 'import sys; sys.path.insert(0, "src"); import remap; roots = remap.local_roots(); print(roots[0] if roots else "")')"
+ROOT="$("$REALIAS" --onedrive-roots | head -1)"
 [ -n "$ROOT" ] || { echo "no OneDrive folder found on this Mac"; exit 1; }
 
 TARGET="$ROOT/$RELATIVE"
@@ -15,18 +18,17 @@ TARGET="$ROOT/$RELATIVE"
 OUT="testdata/$(basename "$RELATIVE")"
 mkdir -p testdata
 rm -f "$OUT"
-osascript -l JavaScript src/make_alias.js "$TARGET" "$PWD/$OUT" >/dev/null
+"$REALIAS" --make-alias "$TARGET" "$PWD/$OUT"
 
-OUT="$OUT" python3 - <<'PY'
-# Same-length username swap keeps the length-prefixed bookmark strings valid.
-import getpass, os
+# Same-length username swap keeps the length-prefixed bookmark strings valid,
+# so pad "otherperson" to exactly the length of the real name.
+USERNAME="$(id -un)"
+FAKE=""
+while [ "${#FAKE}" -lt "${#USERNAME}" ]; do FAKE="${FAKE}otherperson"; done
+FAKE="${FAKE:0:${#USERNAME}}"
 
-path = os.environ["OUT"]
-user = getpass.getuser().encode()
-fake = (b"otherperson" * (len(user) // 11 + 1))[:len(user)]
+LC_ALL=C perl -0777 -pe "\$c = s/\Q$USERNAME\E/$FAKE/g; END { exit(\$c ? 0 : 1) }" \
+	"$OUT" > "$OUT.tmp" || { rm -f "$OUT.tmp"; echo "username not found in bookmark data"; exit 1; }
+mv "$OUT.tmp" "$OUT"
 
-data = open(path, "rb").read()
-assert user in data, "username not found in bookmark data"
-open(path, "wb").write(data.replace(user, fake))
-PY
-echo "$OUT -> $(python3 src/bookmark.py "$OUT")"
+echo "$OUT -> $("$REALIAS" --target-of "$OUT")"

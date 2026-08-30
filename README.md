@@ -72,30 +72,44 @@ If a name is already taken, a number is appended.
 
 ## Command line
 
-    python3 src/realias.py ~/path/to/some.alias
+The app bundle *is* the command line tool:
+
+    /Applications/Realias.app/Contents/MacOS/Realias ~/path/to/some.alias
 
 Prints the path of each alias it creates. `--report` switches to the
-human-readable summary the app and Quick Action display.
+human-readable summary the app and Quick Action display. Three more flags help
+when working on Realias itself: `--target-of` prints the path an alias records,
+`--make-alias <target> <alias>` writes an alias file, and `--onedrive-roots`
+lists the OneDrive folders found on this Mac.
 
 ## Building and installing
 
-    ./build.sh     # rebuilds Realias.app and the .workflow from src/
+Realias is a single Swift package — no Xcode project, no runtime
+dependencies. The Swift toolchain that ships with the Command Line Tools is
+enough.
+
+    ./build.sh     # builds Realias.app and stages the .workflow
     ./install.sh   # copies them to /Applications and ~/Library/Services
 
-The Quick Action calls the copy of the script inside
-`/Applications/Realias.app`, so install after every build.
+The Quick Action calls `/Applications/Realias.app`, so install after every
+build. `build.sh` ad-hoc signs the bundle, because macOS refuses an unsigned
+app the Automation permission it needs to read the Finder selection.
 
 ## Layout
 
 | File | Purpose |
 | --- | --- |
-| `src/bookmark.py` | Parses alias bookmark data; returns the recorded path |
-| `src/remap.py` | Rewrites a foreign OneDrive path to this Mac's |
-| `src/config.py` | Reads (and creates) `config.json` |
-| `src/realias.py` | Ties it together; CLI entry point |
-| `src/make_alias.js` | Writes a real Finder alias via the Cocoa bookmark API |
-| `src/Realias.applescript` | The app: Finder selection → dialog |
-| `src/make_quickaction.py` | Generates the Services workflow bundle |
+| `Sources/Realias/Bookmark.swift` | Parses alias bookmark data; returns the recorded path |
+| `Sources/Realias/Remap.swift` | Rewrites a foreign OneDrive path to this Mac's |
+| `Sources/Realias/Config.swift` | Reads (and creates) `config.json` |
+| `Sources/Realias/AliasFile.swift` | Writes a real Finder alias via the Cocoa bookmark API |
+| `Sources/Realias/Localize.swift` | Ties it together: read → remap → write |
+| `Sources/Realias/Report.swift` | The summary the dialog and Quick Action show |
+| `Sources/Realias/FinderSelection.swift` | Asks Finder what is selected, unresolved |
+| `Sources/Realias/App.swift` | The app: Finder selection → dialog |
+| `Sources/Realias/CLI.swift` | Command line entry point |
+| `Resources/Info.plist` | The app bundle's property list |
+| `QuickAction/` | The Services workflow bundle, copied as-is by `build.sh` |
 | `make_testalias.sh` | Builds a fake foreign alias in `testdata/` |
 
 Errors that happen inside the app bundle are appended to
