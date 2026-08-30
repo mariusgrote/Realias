@@ -1,14 +1,14 @@
 # Build output (recreate with ./build.sh)
-Realias.app/
-Create Local Alias.workflow/
+.build/
+/Realias.app/
+/Create Local Alias.workflow/
 
-# Generated test fixtures (recreate with ./make_testalias.sh)
-testdata/Dokumente
-testdata/file.txt
-
-# Python
-__pycache__/
-*.py[cod]
+# Generated test fixtures (recreate with ./make_testalias.sh).
+# These are real bookmark blobs: they embed this Mac's user name, OneDrive
+# tenant and volume UUID, so none of them belong in the repo.
+testdata/*
+!testdata/target/
+!testdata/target/**
 
 # macOS
 .DS_Store

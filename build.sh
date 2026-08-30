@@ -1,25 +1,29 @@
 #!/bin/bash
-# Build Realias.app and the Finder Quick Action from src/.
-# Re-run after changing anything in src/, then ./install.sh.
+# Build Realias.app from the Swift package and stage the Finder Quick Action.
+# Re-run after changing anything in Sources/, then ./install.sh.
 set -euo pipefail
 cd "$(dirname "$0")"
 
 APP="Realias.app"
 WORKFLOW="Create Local Alias.workflow"
 
+swift build -c release
+BINARY="$(swift build -c release --show-bin-path)/Realias"
+
 rm -rf "$APP"
-osacompile -o "$APP" src/Realias.applescript
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+cp "$BINARY" "$APP/Contents/MacOS/Realias"
+cp Resources/Info.plist "$APP/Contents/Info.plist"
+printf 'APPL????' > "$APP/Contents/PkgInfo"
 
-RES="$APP/Contents/Resources/src"
-mkdir -p "$RES"
-cp src/realias.py src/bookmark.py src/config.py src/remap.py src/make_alias.js "$RES/"
+# Ad-hoc signature: unsigned bundles are refused the Automation permission
+# they need to read the Finder selection.
+codesign --force --sign - "$APP"
 
-/usr/libexec/PlistBuddy -c "Set :CFBundleName Realias" \
-	-c "Add :CFBundleIdentifier string io.github.mariusgrote.realias" \
-	"$APP/Contents/Info.plist"
-
-# The Quick Action points at the installed app, so build it for /Applications.
-python3 src/make_quickaction.py "/Applications/$APP" "$WORKFLOW"
+# The Quick Action calls the app installed in /Applications, so it is the same
+# bundle every time; just stage it next to the app.
+rm -rf "$WORKFLOW"
+cp -R "QuickAction/$WORKFLOW" "$WORKFLOW"
 
 echo "Built $PWD/$APP"
 echo "Built $PWD/$WORKFLOW"
