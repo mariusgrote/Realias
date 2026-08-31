@@ -4,8 +4,8 @@ import SwiftUI
 /// What a manual launch of Realias shows: the settings, plus a way to pick
 /// alias files to rebuild.
 ///
-/// Settings are written to `config.json` as they change, so there is no Save
-/// button — the file is the single source of truth and stays editable by hand.
+/// Settings are written to the app's preferences as they change, so there is
+/// no Save button.
 final class MainModel: ObservableObject {
   @Published var suffix: String {
     didSet { save() }
@@ -16,22 +16,9 @@ final class MainModel: ObservableObject {
 
   /// The report from the last rebuild, shown below the buttons.
   @Published var report: String = ""
-  /// A problem with config.json itself, or with saving it.
-  @Published var problem: String?
 
   init() {
-    let loaded: Settings
-    do {
-      loaded = try Settings.load()
-    } catch {
-      loaded = .defaults
-      // Assigning below would trigger `save()` and overwrite the broken file,
-      // so the note is set after the initial values are in place.
-      self.suffix = loaded.suffix
-      self.nameSource = loaded.nameSource
-      self.problem = "\(error)\n\nShowing the defaults; changing anything here replaces the file."
-      return
-    }
+    let loaded = Settings.load()
     self.suffix = loaded.suffix
     self.nameSource = loaded.nameSource
   }
@@ -55,12 +42,7 @@ final class MainModel: ObservableObject {
   }
 
   private func save() {
-    do {
-      try settings.save()
-      problem = nil
-    } catch {
-      problem = "Could not write \(Settings.path):\n\(error.localizedDescription)"
-    }
+    settings.save()
   }
 
   /// Ask for alias files and rebuild them. The panel must not resolve
@@ -121,13 +103,6 @@ struct MainView: View {
         Button("Use Finder Selection", action: model.useFinderSelection)
         Button("Choose Alias Files…", action: model.chooseFiles)
           .keyboardShortcut(.defaultAction)
-      }
-
-      if let problem = model.problem {
-        Text(problem)
-          .font(.callout)
-          .foregroundStyle(.red)
-          .textSelection(.enabled)
       }
 
       if !model.report.isEmpty {

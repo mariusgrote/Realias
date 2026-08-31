@@ -49,28 +49,27 @@ System Settings → Privacy & Security → Automation.
 
 ## Settings
 
-    ~/Library/Application Support/Realias/config.json
-
-Created with the defaults the first time Realias runs. Edit it in the Realias
-window — changes are written as you make them — or by hand:
-
-    open -e "$HOME/Library/Application Support/Realias/config.json"
-
-```json
-{
-  "suffix": " (this Mac)",
-  "name_source": "alias"
-}
-```
+Change them in the Realias window — launch the app with nothing selected in
+Finder. Changes are written as you make them, so there is no Save button.
 
 | Setting | Meaning |
 | --- | --- |
-| `suffix` | Appended to the name of the new alias, before the extension. Any text. |
-| `name_source` | `alias` names the new file after the original alias; `target` names it after the item the alias points at. |
+| Suffix | Appended to the name of the new alias, before the extension. Any text. |
+| Name from | *The alias file* names the new file after the original alias; *the item it points at* names it after the target. |
 
 So an alias named `My Shortcut` pointing at `…/Documents` becomes
-`My Shortcut (this Mac)` with `"name_source": "alias"`, and
-`Documents (this Mac)` with `"target"`.
+`My Shortcut (this Mac)` when the name comes from the alias file, and
+`Documents (this Mac)` when it comes from the target.
+
+They live in the usual place for macOS preferences,
+`~/Library/Preferences/io.github.mariusgrote.realias.plist`, which belongs to
+the preferences daemon — so read and write it with `defaults`, not a text
+editor:
+
+    defaults read io.github.mariusgrote.realias
+    defaults write io.github.mariusgrote.realias suffix -string " (this Mac)"
+    defaults write io.github.mariusgrote.realias nameSource -string alias
+    defaults delete io.github.mariusgrote.realias    # back to the defaults
 
 If a name is already taken, a number is appended.
 
