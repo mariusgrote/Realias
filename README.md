@@ -28,17 +28,20 @@ and the older `~/OneDrive - …`.
 **Quick Action (easiest):** right-click the alias in Finder →
 *Quick Actions* → **Create Local Alias**.
 
-**App:** select the alias file (or several) in Finder, then launch
-**Realias.app**. Keep it in the Dock so that is one click.
+**Open With:** right-click the alias → *Open With* → **Realias**. A dialog
+reports what was created, then Realias quits.
 
-Either way a dialog reports what was created, or why an alias could not be
-mapped.
+**App window:** launch **Realias.app** on its own and it opens a window with
+the settings, a **Choose Alias Files…** picker, and a **Use Finder Selection**
+button that rebuilds whatever is selected in Finder. Results appear in the
+window, so you can adjust a setting and try again. Realias quits when you close
+the window.
 
-> Double-clicking the alias itself, or dropping it on the app, cannot work:
-> macOS resolves an alias *before* handing it to any application, and that
-> resolution is what fails for an alias from another Mac. The Quick Action and
-> the Finder selection both hand over the alias file unresolved, which is why
-> Realias uses them.
+> Double-clicking the alias itself, or dropping it on the app icon, cannot
+> work: macOS resolves an alias *before* handing it to any application, and
+> that resolution is what fails for an alias from another Mac. The Quick
+> Action, the file picker and the Finder selection all hand over the alias file
+> unresolved, which is why Realias uses those.
 
 On first use macOS asks for permission (to control Finder for the app, to run
 the workflow for the Quick Action). Approve once; see
@@ -48,7 +51,8 @@ System Settings → Privacy & Security → Automation.
 
     ~/Library/Application Support/Realias/config.json
 
-Created with the defaults the first time Realias runs. Open it with:
+Created with the defaults the first time Realias runs. Edit it in the Realias
+window — changes are written as you make them — or by hand:
 
     open -e "$HOME/Library/Application Support/Realias/config.json"
 

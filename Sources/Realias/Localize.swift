@@ -6,6 +6,17 @@ import Foundation
 /// to this machine's, and drops a new alias next to the original. The original
 /// file is never touched, so it keeps working on the Mac that created it.
 enum Localize {
+  /// The name the new alias gets when nothing of that name is in the way.
+  /// Pure string work, so the settings window can preview it.
+  static func newAliasName(original: String, target: String, settings: Settings) -> String {
+    let source = settings.nameSource == .alias ? original : target
+    let name = (source as NSString).lastPathComponent
+    let stem = (name as NSString).deletingPathExtension
+    let extensionPart = (name as NSString).pathExtension
+    let dotExtension = extensionPart.isEmpty ? "" : "." + extensionPart
+    return stem + settings.suffix + dotExtension
+  }
+
   /// Pick a free name next to `original`, per the configured name source.
   static func newAliasPath(original: String, target: String, settings: Settings) -> String {
     let folder = (original as NSString).deletingLastPathComponent
@@ -19,7 +30,7 @@ enum Localize {
       (folder as NSString).appendingPathComponent(filename)
     }
 
-    var candidate = path(stem + settings.suffix + dotExtension)
+    var candidate = path(newAliasName(original: original, target: target, settings: settings))
     var n = 2
     while FileManager.default.fileExists(atPath: candidate) {
       candidate = path("\(stem)\(settings.suffix) \(n)\(dotExtension)")

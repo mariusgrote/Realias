@@ -24,7 +24,8 @@ struct Settings {
     ["suffix": suffix, "name_source": nameSource.rawValue]
   }
 
-  private func write() throws {
+  /// Write the settings back to `config.json`, creating the folder if needed.
+  func save() throws {
     try FileManager.default.createDirectory(
       atPath: Settings.directory,
       withIntermediateDirectories: true)
@@ -37,7 +38,7 @@ struct Settings {
 
   static func load() throws -> Settings {
     guard FileManager.default.fileExists(atPath: path) else {
-      try? defaults.write()
+      try? defaults.save()
       return defaults
     }
 
