@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    # Pinned, not macos-latest: swift-format output changes between toolchain
+    # versions, so an image roll would turn a green branch red.
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Record swift-format version
+        run: xcrun swift-format --version
+
+      # `lint` only reports rules it has a check for; the authoritative test is
+      # that formatting the tree changes nothing.
+      - name: Check formatting
+        run: |
+          xcrun swift-format format --in-place --parallel --recursive Sources Package.swift
+          git diff --exit-code || {
+            echo "::error::Sources are not formatted. Run: xcrun swift-format format -i -r Sources Package.swift"
+            exit 1
+          }
+
+      - name: Lint
+        run: xcrun swift-format lint --strict --parallel --recursive Sources Package.swift
+
+  build:
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [debug, release]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (${{ matrix.configuration }})
+        run: swift build -c ${{ matrix.configuration }}
+
+  package:
+    # Exercises the real packaging path (bundle layout + ad-hoc codesign),
+    # which plain `swift build` does not cover.
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build app bundle and Quick Action
+        run: ./build.sh
+      - name: Verify signature
+        run: codesign --verify --strict --verbose=2 Realias.app
