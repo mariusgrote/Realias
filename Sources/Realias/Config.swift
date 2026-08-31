@@ -6,73 +6,46 @@ enum NameSource: String, CaseIterable {
   case target  // the name of the item the alias points at
 }
 
-/// User settings for Realias, stored as JSON next to the app's data.
+/// User settings for Realias, kept in the app's standard preferences domain
+/// (`~/Library/Preferences/io.github.mariusgrote.realias.plist`).
 ///
-/// The file is created with the defaults on first use, so it is always there
-/// to edit.
+/// The file belongs to `cfprefsd`, so it is read and written only through
+/// `UserDefaults` — never edited by hand. Anything unset falls back to
+/// `defaults`, so there is nothing to create on first use.
 struct Settings {
   var suffix: String
   var nameSource: NameSource
 
   static let defaults = Settings(suffix: " (this Mac)", nameSource: .alias)
 
-  static let directory = (NSHomeDirectory() as NSString)
-    .appendingPathComponent("Library/Application Support/Realias")
-  static let path = (directory as NSString).appendingPathComponent("config.json")
-
-  private var json: [String: Any] {
-    ["suffix": suffix, "name_source": nameSource.rawValue]
+  private enum Key {
+    static let suffix = "suffix"
+    static let nameSource = "nameSource"
   }
 
-  private func write() throws {
-    try FileManager.default.createDirectory(
-      atPath: Settings.directory,
-      withIntermediateDirectories: true)
-    var data = try JSONSerialization.data(
-      withJSONObject: json,
-      options: [.prettyPrinted, .sortedKeys])
-    data.append(0x0A)
-    try data.write(to: URL(fileURLWithPath: Settings.path))
-  }
+  /// The app's preferences. Launched from the bundle — as the Quick Action and
+  /// Finder both do — that is the standard domain. A bare build in `.build`
+  /// has no bundle identifier, so the domain is named explicitly to keep the
+  /// command line on the same settings as the app.
+  static let store: UserDefaults = {
+    let domain = "io.github.mariusgrote.realias"
+    if Bundle.main.bundleIdentifier == domain { return .standard }
+    return UserDefaults(suiteName: domain) ?? .standard
+  }()
 
-  static func load() throws -> Settings {
-    guard FileManager.default.fileExists(atPath: path) else {
-      try? defaults.write()
-      return defaults
-    }
-
-    let data: Data
-    do {
-      data = try Data(contentsOf: URL(fileURLWithPath: path))
-    } catch {
-      throw ConfigError("could not read \(path):\n\(error.localizedDescription)")
-    }
-
-    let parsed: Any
-    do {
-      parsed = try JSONSerialization.jsonObject(with: data)
-    } catch {
-      throw ConfigError("\(path) is not valid JSON:\n\(error.localizedDescription)")
-    }
-    guard let stored = parsed as? [String: Any] else {
-      throw ConfigError("\(path) must contain a JSON object")
-    }
-
+  static func load() -> Settings {
     var settings = defaults
-    if let suffix = stored["suffix"] {
-      guard let text = suffix as? String else {
-        throw ConfigError("\"suffix\" must be text")
-      }
-      settings.suffix = text
+    if let suffix = store.string(forKey: Key.suffix) {
+      settings.suffix = suffix
     }
-    if let source = stored["name_source"] {
-      guard let text = source as? String, let value = NameSource(rawValue: text) else {
-        throw ConfigError(
-          "\"name_source\" must be one of: "
-            + NameSource.allCases.map(\.rawValue).joined(separator: ", "))
-      }
-      settings.nameSource = value
+    if let raw = store.string(forKey: Key.nameSource), let source = NameSource(rawValue: raw) {
+      settings.nameSource = source
     }
     return settings
+  }
+
+  func save() {
+    Settings.store.set(suffix, forKey: Key.suffix)
+    Settings.store.set(nameSource.rawValue, forKey: Key.nameSource)
   }
 }

@@ -10,13 +10,7 @@ enum Report {
   }
 
   static func run(paths: [String]) -> Outcome {
-    let settings: Settings
-    do {
-      settings = try Settings.load()
-    } catch {
-      return Outcome(text: "\(error)", createdPaths: [], failed: true)
-    }
-
+    let settings = Settings.load()
     var lines: [String] = []
     var created: [String] = []
     var failed = false

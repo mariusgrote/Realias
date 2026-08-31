@@ -28,17 +28,20 @@ and the older `~/OneDrive - …`.
 **Quick Action (easiest):** right-click the alias in Finder →
 *Quick Actions* → **Create Local Alias**.
 
-**App:** select the alias file (or several) in Finder, then launch
-**Realias.app**. Keep it in the Dock so that is one click.
+**Open With:** right-click the alias → *Open With* → **Realias**. A dialog
+reports what was created, then Realias quits.
 
-Either way a dialog reports what was created, or why an alias could not be
-mapped.
+**App window:** launch **Realias.app** on its own and it opens a window with
+the settings, a **Choose Alias Files…** picker, and a **Use Finder Selection**
+button that rebuilds whatever is selected in Finder. Results appear in the
+window, so you can adjust a setting and try again. Realias quits when you close
+the window.
 
-> Double-clicking the alias itself, or dropping it on the app, cannot work:
-> macOS resolves an alias *before* handing it to any application, and that
-> resolution is what fails for an alias from another Mac. The Quick Action and
-> the Finder selection both hand over the alias file unresolved, which is why
-> Realias uses them.
+> Double-clicking the alias itself, or dropping it on the app icon, cannot
+> work: macOS resolves an alias *before* handing it to any application, and
+> that resolution is what fails for an alias from another Mac. The Quick
+> Action, the file picker and the Finder selection all hand over the alias file
+> unresolved, which is why Realias uses those.
 
 On first use macOS asks for permission (to control Finder for the app, to run
 the workflow for the Quick Action). Approve once; see
@@ -46,27 +49,27 @@ System Settings → Privacy & Security → Automation.
 
 ## Settings
 
-    ~/Library/Application Support/Realias/config.json
-
-Created with the defaults the first time Realias runs. Open it with:
-
-    open -e "$HOME/Library/Application Support/Realias/config.json"
-
-```json
-{
-  "suffix": " (this Mac)",
-  "name_source": "alias"
-}
-```
+Change them in the Realias window — launch the app with nothing selected in
+Finder. Changes are written as you make them, so there is no Save button.
 
 | Setting | Meaning |
 | --- | --- |
-| `suffix` | Appended to the name of the new alias, before the extension. Any text. |
-| `name_source` | `alias` names the new file after the original alias; `target` names it after the item the alias points at. |
+| Suffix | Appended to the name of the new alias, before the extension. Any text. |
+| Name from | *The alias file* names the new file after the original alias; *the item it points at* names it after the target. |
 
 So an alias named `My Shortcut` pointing at `…/Documents` becomes
-`My Shortcut (this Mac)` with `"name_source": "alias"`, and
-`Documents (this Mac)` with `"target"`.
+`My Shortcut (this Mac)` when the name comes from the alias file, and
+`Documents (this Mac)` when it comes from the target.
+
+They live in the usual place for macOS preferences,
+`~/Library/Preferences/io.github.mariusgrote.realias.plist`, which belongs to
+the preferences daemon — so read and write it with `defaults`, not a text
+editor:
+
+    defaults read io.github.mariusgrote.realias
+    defaults write io.github.mariusgrote.realias suffix -string " (this Mac)"
+    defaults write io.github.mariusgrote.realias nameSource -string alias
+    defaults delete io.github.mariusgrote.realias    # back to the defaults
 
 If a name is already taken, a number is appended.
 

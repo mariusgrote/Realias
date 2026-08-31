@@ -56,13 +56,7 @@ enum CLI {
       return 0
     }
 
-    let settings: Settings
-    do {
-      settings = try Settings.load()
-    } catch {
-      return fail("\(error)", status: 2)
-    }
-
+    let settings = Settings.load()
     var status: Int32 = 0
     for path in paths {
       do {

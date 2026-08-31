@@ -1,62 +1,99 @@
 import AppKit
 
-/// Realias as a Finder-facing app: select the alias file (or files) in Finder,
-/// then launch Realias. Dropping files on the app is supported but rarely
-/// useful, because macOS resolves an alias before handing it over — which is
-/// exactly what fails for a foreign alias.
+/// Realias has two ways in.
+///
+/// Handed files directly — "Open With", or the Quick Action — it rebuilds them,
+/// reports, and quits. Launched on its own it opens the main window, where the
+/// settings live and alias files can be picked.
+///
+/// Note that dropping an alias on the app icon cannot work: macOS resolves an
+/// alias before handing it over, and that resolution is what fails for a
+/// foreign alias. The window's file picker asks for no resolution, so it can.
 final class AppDelegate: NSObject, NSApplicationDelegate {
-  private var hasRun = false
+  private var handledDocuments = false
 
   func application(_ application: NSApplication, open urls: [URL]) {
-    runOnce { self.localize(paths: urls.map(\.path)) }
+    handledDocuments = true
+    let outcome = Report.run(paths: urls.map(\.path))
+    alert(outcome.text)
+    NSApp.terminate(nil)
   }
 
   // AppKit's counterpart to `application(_:open:)`: it fires only when the
   // app was launched without documents, so the two paths cannot both run.
   func applicationOpenUntitledFile(_ sender: NSApplication) -> Bool {
-    runOnce { self.runFromFinderSelection() }
+    MainWindow.show()
     return true
+  }
+
+  // Clicking the Dock icon of the already-running app brings the window back.
+  func applicationShouldHandleReopen(
+    _ sender: NSApplication, hasVisibleWindows: Bool
+  ) -> Bool {
+    MainWindow.show()
+    return true
+  }
+
+  func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+    true
   }
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.regular)
+    NSApp.mainMenu = Self.menu()
     NSApp.activate(ignoringOtherApps: true)
 
-    // Safety net for a launch that delivers neither callback: a late dialog
-    // beats an app that sits there doing nothing. `runOnce` keeps it from
-    // duplicating work the real callback already did.
+    // Safety net for a launch that delivers neither callback: a window beats an
+    // app that sits there doing nothing. `MainWindow.show` is idempotent, and
+    // the flag keeps it from appearing behind a report that is already up.
     DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [self] in
-      runOnce { runFromFinderSelection() }
+      guard !handledDocuments else { return }
+      MainWindow.show()
     }
   }
 
-  /// The first caller wins and does the work; every caller ends the app.
-  private func runOnce(_ body: () -> Void) {
-    guard !hasRun else { return }
-    hasRun = true
-    body()
-    NSApp.terminate(nil)
-  }
-
-  private func runFromFinderSelection() {
-    let paths: [String]
-    do {
-      paths = try FinderSelection.paths()
-    } catch {
-      Log.write("reading Finder selection: \(error)")
-      alert("Realias could not read the Finder selection:\n\n\(error)", style: .critical)
-      return
+  /// Without a menu bar there is no Quit, and no Cut/Copy/Paste in the
+  /// settings field — AppKit routes those through menu items.
+  private static func menu() -> NSMenu {
+    func submenu(_ title: String, _ items: [NSMenuItem]) -> NSMenuItem {
+      let item = NSMenuItem()
+      item.submenu = NSMenu(title: title)
+      items.forEach(item.submenu!.addItem)
+      return item
     }
-    if paths.isEmpty {
-      alert("Select the alias file (or files) in Finder, then start Realias again.")
-      return
+    func item(_ title: String, _ action: Selector, _ key: String) -> NSMenuItem {
+      NSMenuItem(title: title, action: action, keyEquivalent: key)
     }
-    localize(paths: paths)
-  }
 
-  private func localize(paths: [String]) {
-    let outcome = Report.run(paths: paths)
-    alert(outcome.text)
+    let main = NSMenu()
+    main.addItem(
+      submenu(
+        "Realias",
+        [
+          item("Hide Realias", #selector(NSApplication.hide(_:)), "h"),
+          .separator(),
+          item("Quit Realias", #selector(NSApplication.terminate(_:)), "q"),
+        ]))
+    main.addItem(
+      submenu(
+        "Edit",
+        [
+          item("Undo", Selector(("undo:")), "z"),
+          item("Redo", Selector(("redo:")), "Z"),
+          .separator(),
+          item("Cut", #selector(NSText.cut(_:)), "x"),
+          item("Copy", #selector(NSText.copy(_:)), "c"),
+          item("Paste", #selector(NSText.paste(_:)), "v"),
+          item("Select All", #selector(NSText.selectAll(_:)), "a"),
+        ]))
+    main.addItem(
+      submenu(
+        "Window",
+        [
+          item("Close", #selector(NSWindow.performClose(_:)), "w"),
+          item("Minimize", #selector(NSWindow.performMiniaturize(_:)), "m"),
+        ]))
+    return main
   }
 
   private func alert(_ text: String, style: NSAlert.Style = .informational) {

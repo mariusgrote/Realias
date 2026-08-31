@@ -21,11 +21,6 @@ struct RemapError: RealiasError {
   init(_ message: String) { self.message = message }
 }
 
-struct ConfigError: RealiasError {
-  let message: String
-  init(_ message: String) { self.message = message }
-}
-
 struct AliasError: RealiasError {
   let message: String
   init(_ message: String) { self.message = message }
