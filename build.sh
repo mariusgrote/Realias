@@ -14,6 +14,7 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BINARY" "$APP/Contents/MacOS/Realias"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+cp Resources/Realias.icns "$APP/Contents/Resources/Realias.icns"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
 # Ad-hoc signature: unsigned bundles are refused the Automation permission

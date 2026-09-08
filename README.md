@@ -81,6 +81,10 @@ Install after every build, since the Quick Action calls the copy in
 give an unsigned app the Automation permission it needs to read the Finder
 selection.
 
+The icon is drawn in code, not stored as artwork: `./Tools/make_icon.sh`
+re-renders `Resources/Realias.icns` from `Tools/make_icon.swift`. `build.sh`
+only copies the result, so run it after changing the drawing.
+
 Sources are one file per step: `Bookmark` reads the path, `Remap` rewrites it,
 `AliasFile` writes the new alias, `Localize` chains the three. Errors from the
 app bundle land in `~/Library/Logs/Realias.log`.

@@ -6,6 +6,8 @@
 	<string>Realias</string>
 	<key>CFBundleDisplayName</key>
 	<string>Realias</string>
+	<key>CFBundleIconFile</key>
+	<string>Realias</string>
 	<key>CFBundleExecutable</key>
 	<string>Realias</string>
 	<key>CFBundleIdentifier</key>
