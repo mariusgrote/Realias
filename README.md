@@ -89,6 +89,24 @@ Sources are one file per step: `Bookmark` reads the path, `Remap` rewrites it,
 `AliasFile` writes the new alias, `Localize` chains the three. Errors from the
 app bundle land in `~/Library/Logs/Realias.log`.
 
+## Releases
+
+Push a `v*` tag, or publish a release in the GitHub UI and let it create the
+tag. GitHub Actions builds Realias for Apple Silicon and Intel, stamps the tag
+into the app bundle, and attaches both zip files to the release. Each archive
+contains the app, Quick Action, and installer.
+
+```sh
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+Before the first tag, local builds use `0.1.0`. After that they use
+`git describe`. Override the version and build number with
+`VERSION=1.2.3 BUILD=42 ./build.sh`.
+
+The app is ad-hoc signed rather than notarized, so the first launch may require
+right-clicking the app and choosing Open.
+
 ## Limits
 
 - Targets must live inside OneDrive. Anything else is reported as unmappable.
