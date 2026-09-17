@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and upload
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Apple Silicon release
+        env:
+          VERSION: ${{ github.ref_name }}
+          BUILD: ${{ github.run_number }}
+        run: |
+          ./build.sh --arch arm64
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Realias.app/Contents/Info.plist)" = "${GITHUB_REF_NAME#v}"
+          test "$(lipo -archs Realias.app/Contents/MacOS/Realias)" = "arm64"
+          mkdir -p "dist/Realias"
+          cp -R "Realias.app" "Create Local Alias.workflow" install.sh "dist/Realias/"
+          ditto -c -k --keepParent "dist/Realias" "Realias-${GITHUB_REF_NAME}.zip"
+
+      - name: Build Intel release
+        env:
+          VERSION: ${{ github.ref_name }}
+          BUILD: ${{ github.run_number }}
+        run: |
+          ./build.sh --arch x86_64
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Realias.app/Contents/Info.plist)" = "${GITHUB_REF_NAME#v}"
+          test "$(lipo -archs Realias.app/Contents/MacOS/Realias)" = "x86_64"
+          rm -rf "dist/Realias"
+          mkdir -p "dist/Realias"
+          cp -R "Realias.app" "Create Local Alias.workflow" install.sh "dist/Realias/"
+          ditto -c -k --keepParent "dist/Realias" "Realias-${GITHUB_REF_NAME}-intel.zip"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ASSETS=("Realias-${GITHUB_REF_NAME}.zip" "Realias-${GITHUB_REF_NAME}-intel.zip")
+          # The release may already exist when the tag was created in the GitHub UI.
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" --clobber "${ASSETS[@]}"
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              --title "$GITHUB_REF_NAME" \
+              --generate-notes \
+              "${ASSETS[@]}"
+          fi
