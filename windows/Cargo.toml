@@ -1,0 +1,19 @@
+[package]
+name = "realias"
+version = "0.1.0"
+edition = "2024"
+description = "Turn macOS aliases synced through OneDrive into Windows shortcuts"
+license = "MIT"
+publish = false
+
+[dependencies]
+unicode-normalization = "0.1.26"
+
+[target."cfg(windows)".dependencies]
+windows = { version = "0.62.2", features = ["Win32_Foundation", "Win32_System_Com", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging", "Win32_System_Console"] }
+winreg = "0.56.0"
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1

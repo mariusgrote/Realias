@@ -2,6 +2,7 @@
 .build/
 /Realias.app/
 /Create Local Alias.workflow/
+/windows/target/
 
 # Generated test fixtures (recreate with ./make_testalias.sh).
 # These are real bookmark blobs: they embed this Mac's user name, OneDrive
