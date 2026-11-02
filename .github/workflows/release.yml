@@ -15,7 +15,7 @@ jobs:
       run:
         working-directory: windows
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build release
         env:
@@ -26,7 +26,7 @@ jobs:
           Copy-Item target/release/realias.exe dist/Realias/
           Compress-Archive -Path dist/Realias -DestinationPath "Realias-${{ github.ref_name }}-windows.zip"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: windows
           path: windows/Realias-${{ github.ref_name }}-windows.zip
@@ -36,7 +36,7 @@ jobs:
     needs: windows
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build Apple Silicon release
         env:
@@ -63,7 +63,7 @@ jobs:
           cp -R "Realias.app" "Create Local Alias.workflow" install.sh "dist/Realias/"
           ditto -c -k --keepParent "dist/Realias" "Realias-${GITHUB_REF_NAME}-intel.zip"
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: windows
 

@@ -15,7 +15,7 @@ jobs:
     # versions, so an image roll would turn a green branch red.
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Record swift-format version
         run: xcrun swift-format --version
@@ -40,7 +40,7 @@ jobs:
       matrix:
         configuration: [debug, release]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build (${{ matrix.configuration }})
         run: swift build -c ${{ matrix.configuration }}
 
@@ -49,7 +49,7 @@ jobs:
     # which plain `swift build` does not cover.
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build app bundle and Quick Action
         run: ./build.sh
       - name: Verify signature
@@ -62,7 +62,7 @@ jobs:
       run:
         working-directory: windows
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check formatting
         run: cargo fmt --check
       - name: Lint
@@ -71,8 +71,9 @@ jobs:
         run: cargo test --locked
       - name: Build release
         run: cargo build --release --locked
+      # Uploaded unzipped, so the artifact downloads as realias.exe itself.
       - name: Upload realias.exe
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: realias-windows
           path: windows/target/release/realias.exe
+          archive: false
