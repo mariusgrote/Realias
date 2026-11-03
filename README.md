@@ -89,12 +89,44 @@ Sources are one file per step: `Bookmark` reads the path, `Remap` rewrites it,
 `AliasFile` writes the new alias, `Localize` chains the three. Errors from the
 app bundle land in `~/Library/Logs/Realias.log`.
 
+## Windows
+
+`windows/` holds a separate Rust port for PCs that see the same OneDrive. It
+reads a Mac alias the same way and writes a Windows shortcut (`.lnk`) next to
+it:
+
+    Plan.pdf alias  ->  Plan.pdf alias (Windows).lnk
+
+Put `realias.exe` somewhere permanent and run it once with `--install`. That
+adds **Create Windows Shortcut** to the right-click menu of every file, for
+the current user only. On Windows 11 the entry is under *Show more options*.
+`--uninstall` removes it again.
+
+The command line matches the Mac one: `realias <alias>`, `--report`,
+`--target-of` and `--onedrive-roots`. OneDrive roots come from the client's
+environment variables and registry entries, plus any `OneDrive…` folder in the
+user profile.
+
+The settings are registry values under `HKCU\Software\Realias`: `Suffix`,
+default ` (Windows)`, and `NameSource`, either `alias` or `target`:
+
+    reg add HKCU\Software\Realias /v Suffix /t REG_SZ /d " (PC)" /f
+
+Build and test it with `cargo build --release` and `cargo test` inside
+`windows/`. The parsing and path-mapping tests also run on a Mac, and they read
+any aliases that `make_testalias.sh` left in `testdata/`.
+
+SharePoint libraries that sync outside the `OneDrive…` folder are not mapped.
+Neither are pre-10.6 aliases, which keep their data in the resource fork,
+something OneDrive does not sync.
+
 ## Releases
 
 Push a `v*` tag, or publish a release in the GitHub UI and let it create the
-tag. GitHub Actions builds Realias for Apple Silicon and Intel, stamps the tag
-into the app bundle, and attaches both zip files to the release. Each archive
-contains the app, Quick Action, and installer.
+tag. GitHub Actions builds Realias for Apple Silicon, Intel and Windows, stamps
+the tag into each build, and attaches the three zip files to the release. The
+Mac archives contain the app, Quick Action, and installer; the Windows one
+contains `realias.exe`.
 
 ```sh
 git tag v0.1.0 && git push origin v0.1.0

@@ -8,11 +8,35 @@ permissions:
   contents: write
 
 jobs:
+  windows:
+    name: Build Windows
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build release
+        env:
+          REALIAS_VERSION: ${{ github.ref_name }}
+        run: |
+          cargo build --release --locked
+          New-Item -ItemType Directory -Force dist/Realias | Out-Null
+          Copy-Item target/release/realias.exe dist/Realias/
+          Compress-Archive -Path dist/Realias -DestinationPath "Realias-${{ github.ref_name }}-windows.zip"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows
+          path: windows/Realias-${{ github.ref_name }}-windows.zip
+
   release:
     name: Build and upload
+    needs: windows
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build Apple Silicon release
         env:
@@ -39,11 +63,19 @@ jobs:
           cp -R "Realias.app" "Create Local Alias.workflow" install.sh "dist/Realias/"
           ditto -c -k --keepParent "dist/Realias" "Realias-${GITHUB_REF_NAME}-intel.zip"
 
+      - uses: actions/download-artifact@v8
+        with:
+          name: windows
+
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          ASSETS=("Realias-${GITHUB_REF_NAME}.zip" "Realias-${GITHUB_REF_NAME}-intel.zip")
+          ASSETS=(
+            "Realias-${GITHUB_REF_NAME}.zip"
+            "Realias-${GITHUB_REF_NAME}-intel.zip"
+            "Realias-${GITHUB_REF_NAME}-windows.zip"
+          )
           # The release may already exist when the tag was created in the GitHub UI.
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" --clobber "${ASSETS[@]}"
